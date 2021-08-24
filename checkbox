@@ -1,0 +1,187 @@
+$("body").on("change", "input.ACTIVE:checkbox", function ()
+    {
+        var data = {};
+        data["seriality_photo"] = {};
+        var map = $.map($("input.edit:checkbox:checked"), function (el)
+        {
+            return $(el).attr("data-id");
+        });
+        var sect_active = true;
+        if (map.length > 0)
+        {
+            var data = { id: map };
+            var seriality = "N";
+            var seriality_photo = {};
+            $.each(map, function (index, el)
+            {
+                if (
+                    $('tr.reports-list-item[data-id="' + el + '"]')
+                        .find('.NAME [data-prop="IBLOCK_SECTION_ID"]')
+                        .find('[data-active="N"]').length > 0
+                )
+                {
+                    sect_active = false;
+                }
+
+                if (
+                    $('tr.reports-list-item[data-id="' + el + '"]')
+                        .find("input.SERIALITY")
+                        .is(":checked")
+                )
+                {
+                    seriality = "Y";
+                }
+
+                seriality_photo[el] = {};
+
+                $('tr.reports-list-item[data-id="' + el + '"]')
+                    .find(".block_COLORS")
+                    .each(function (index, elem)
+                    {
+                        seriality_photo[el][$(elem).attr("data-file")] = $(elem).attr(
+                            "data-type"
+                        );
+                    });
+
+                $('tr.reports-list-item[data-id="' + el + '"]')
+                    .find(".checkColor")
+                    .each(function (index, element)
+                    {
+                        if (typeof $(element).attr("data-dop-color") != "undefined")
+                        {
+                            data["seriality_photo_select"][el][
+                                $(element).attr("data-file")
+                            ] = {};
+                            var dopColor = $(element).attr("data-dop-color");
+                            $('tr.reports-list-item[data-id="' + el + '"]')
+                                .find(".checkColor[data-color=" + dopColor + "]")
+                                .each(function (key, elem)
+                                {
+                                    data["seriality_photo_select"][el][
+                                        $(element).attr("data-file")
+                                    ][$(elem).attr("data-file")] = $(elem).attr("data-file");
+                                });
+                        }
+                    });
+
+                var similarImageMain = $(
+                    'tr.reports-list-item[data-id="' + el + '"]'
+                ).find(".mine-img .similar_more");
+                seriality_photo[el][$(similarImageMain).attr("data-file")] = $(
+                    similarImageMain
+                ).attr("data-type");
+            });
+            data["seriality"] = seriality;
+            data["seriality_photo"] = seriality_photo;
+        } else
+        {
+            id = $(this).attr("data-id");
+            data = { id: id, code: "ACTIVE" };
+
+            if (
+                $(this)
+                    .parents("tr.reports-list-item")
+                    .find('.NAME [data-prop="IBLOCK_SECTION_ID"]')
+                    .find('[data-active="N"]').length > 0
+            )
+            {
+                sect_active = false;
+            }
+
+            if (
+                $(this)
+                    .parents("tr.reports-list-item")
+                    .find("input.SERIALITY")
+                    .is(":checked")
+            )
+            {
+                data["seriality"] = { [id]: "Y" };
+            } else
+            {
+                data["seriality"] = { [id]: "N" };
+            }
+
+            data["seriality_photo"] = { [id]: {} };
+            data["seriality_photo_select"] = { [id]: {} };
+
+            $(this)
+                .parents("tr.reports-list-item")
+                .find(".block_COLORS")
+                .each(function (index, el)
+                {
+                    data["seriality_photo"][id][$(el).attr("data-file")] = $(el).attr(
+                        "data-type"
+                    );
+                });
+
+            var similarImageMain = $(this)
+                .parents("tr.reports-list-item")
+                .find(".mine-img .similar_more");
+            data["seriality_photo"][id][$(similarImageMain).attr("data-file")] = $(
+                similarImageMain
+            ).attr("data-type");
+
+            $(this)
+                .parents("tr.reports-list-item")
+                .find(".checkColor")
+                .each(function (index, el)
+                {
+                    if (typeof $(el).attr("data-dop-color") != "undefined")
+                    {
+                        data["seriality_photo_select"][id][$(el).attr("data-file")] = {};
+                        var dopColor = $(el).attr("data-dop-color");
+                        $(this)
+                            .parents("tr.reports-list-item")
+                            .find(".checkColor[data-color=" + dopColor + "]")
+                            .each(function (key, elem)
+                            {
+                                data["seriality_photo_select"][id][$(el).attr("data-file")][
+                                    $(elem).attr("data-file")
+                                ] = $(elem).attr("data-file");
+                            });
+                    }
+                });
+        }
+
+        if ($(this).is(":checked"))
+        {
+            if (map.length > 0)
+            {
+                // var form = data;
+                // form.push({name:'ACTIVE',value:'Y'});
+                // var data = {id:map, form:form};
+
+                data["form"] = { 0: { value: "Y", name: "ACTIVE" } };
+                send("edit", data);
+            } else
+            {
+                data["value"] = "Y";
+                send("edit_one", data);
+            }
+
+            if (!sect_active)
+            {
+                $(".messages-active_no_section").fadeIn(500);
+                setTimeout(function ()
+                {
+                    $(".messages-active_no_section").fadeOut(500);
+                }, 3000);
+            }
+        } else
+        {
+            if (map.length > 0)
+            {
+                // var form = data;
+                // form.push({name:'ACTIVE',value:'N'});
+                // var data = {id:map, form:form};
+                data["form"] = { 0: { value: "N", name: "ACTIVE" } };
+
+                send("edit", data);
+            } else
+            {
+                data["value"] = "N";
+                send("edit_one", data);
+            }
+        }
+        $("input.edit:checkbox").prop("checked", false);
+    });
